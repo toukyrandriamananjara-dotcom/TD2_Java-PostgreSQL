@@ -235,4 +235,88 @@ public class DataRetriever {
             associateStmt.close();
         }
     }
+
+    List<Dish> findDishesByIngredientName(String ingredientName){
+        List<Dish> dishes = new ArrayList<>();
+        try {
+            Connection connection = dbConnection.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT DISTINCT d.id AS dish_id, d.name AS dish_name " +
+                    "FROM Dish d JOIN Ingredient i ON d.id = i.id_dish " +
+                    "WHERE i.name ILIKE ? ORDER BY d.name ASC;");
+            preparedStatement.setString(1, "%"+ingredientName+"%");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Dish dish = new Dish();
+                dish.setId(resultSet.getInt("dish_id"));
+                dish.setName(resultSet.getString("dish_name"));
+                dishes.add(dish);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return dishes;
+    };
+
+    List<Ingredient> findIngredientsByCriteria(String ingredientName,
+                                               CategoryEnum category,
+                                               String dishName,
+                                               int page, int size){
+        List<Ingredient> ingredients = new ArrayList<>();
+        try {
+            Connection connection = dbConnection.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT i.id AS ingredient_id, i.name AS ingredient_name, " +
+                            "i.price, i.category, d.id AS dish_id, " +
+                            "d.name AS dish_name FROM Ingredient i JOIN Dish d " +
+                            "ON d.id = i.dish_id WHERE " +
+                            "(? IS NULL OR i.name ILIKE ?) " +
+                            "AND (? IS NULL OR i.category = ?) " +
+                            "AND (? IS NULL OR d.name ILIKE ?) " +
+                            "ORDER BY i.name ASC " +
+                            "LIMIT ? OFFSET ?"
+            );
+            int index = 1;
+            if(ingredientName != null){
+                preparedStatement.setString(index++, String.valueOf(Types.VARCHAR));
+                preparedStatement.setString(index++, String.valueOf(Types.VARCHAR));
+            } else{
+                preparedStatement.setString(index++, ingredientName);
+                preparedStatement.setString(index++, "%"+ingredientName+"%");
+            };
+            if(category != null){
+                preparedStatement.setString(index++, String.valueOf(Types.VARCHAR));
+                preparedStatement.setString(index++, String.valueOf(Types.VARCHAR));
+            } else {
+                preparedStatement.setString(index++, category.name());
+                preparedStatement.setString(index++, category.name());
+            };
+            if(dishName != null){
+                preparedStatement.setString(index++, String.valueOf(Types.VARCHAR));
+                preparedStatement.setString(index++, String.valueOf(Types.VARCHAR));
+            } else {
+                preparedStatement.setString(index++, dishName);
+                preparedStatement.setString(index++, "%"+dishName+"%");
+            };
+            preparedStatement.setInt(index++, size);
+            preparedStatement.setInt(index, (page - 1)*size);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    Ingredient ingredient = new Ingredient();
+                    ingredient.setId(resultSet.getInt("ingredient_id"));
+                    ingredient.setName(resultSet.getString("ingredient_name"));
+                    ingredient.setPrice(resultSet.getDouble("price"));
+                    ingredient.setCategory(CategoryEnum.valueOf(category.name()));
+                    Dish dish = new Dish();
+                    dish.setId(resultSet.getInt("dish_id"));
+                    dish.setName(resultSet.getString("dish_name"));
+                    ingredients.add(ingredient);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return ingredients;
+    };
 }
