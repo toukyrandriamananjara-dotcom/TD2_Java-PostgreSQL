@@ -15,8 +15,12 @@ public class Ingredient {
         this.dish = dish;
     }
 
-    public Ingredient(int anInt, String string) {
+    public Ingredient(String name, double price, CategoryEnum category) {
+        this.name = name;
+        this.price = price;
+        this.category = category;
     }
+
 
     public int getId() {
         return id;
