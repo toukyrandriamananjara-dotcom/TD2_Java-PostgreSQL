@@ -52,9 +52,22 @@ public class Dish {
     }
 
     public double getDishCoast() {
+        if (ingredients == null || ingredients.isEmpty()) {
+            return 0.0;
+        }
+
         double total = 0;
         for (Ingredient ingredient : ingredients) {
-            total += ingredient.getPrice();
+            Double requiredQuantity = ingredient.getRequiredQuantity();
+
+            if (requiredQuantity == null) {
+                throw new IllegalStateException(
+                        "Impossible de calculer le coût du plat '" + name + "' : " +
+                                "la quantité nécessaire pour l'ingrédient '" + ingredient.getName() + "' est inconnue."
+                );
+            }
+
+            total += ingredient.getPrice() * requiredQuantity;
         }
         return total;
     }
