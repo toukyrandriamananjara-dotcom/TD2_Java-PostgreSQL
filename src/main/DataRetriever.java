@@ -16,7 +16,8 @@ public class DataRetriever {
         try {
 
             StringBuilder list_plat = new StringBuilder("SELECT d.id as dish_id, d.name as dish_name," +
-                    "d.dish_type as dish_type, i.id as ingredient_id, i.name as ingredient_name, i.price as ingredient_price, i.category as ingredient_category" +
+                    "d.dish_type as dish_type, i.id as ingredient_id, i.name as ingredient_name, i.price as ingredient_price, i.category as ingredient_category, " +
+                    "i.required_quantity as ingredient_quantity" +
                     " FROM Dish d join Ingredient i ON " +
                     "d.id=i.id_dish WHERE d.id = ?");
 
@@ -31,6 +32,7 @@ public class DataRetriever {
                 ingredient.setName(resultSet.getString("ingredient_name"));
                 ingredient.setPrice(resultSet.getDouble("ingredient_price"));
                 ingredient.setCategory(CategoryEnum.valueOf(resultSet.getString("ingredient_category")));
+                ingredient.setRequiredQuantity(resultSet.getDouble("ingredient_quantity"));
 
 
                 dish.setId(resultSet.getInt("dish_id"));
@@ -69,6 +71,7 @@ public class DataRetriever {
                 ingredient.setName(resultSet.getString("name"));
                 ingredient.setPrice(resultSet.getDouble("price"));
                 ingredient.setCategory(CategoryEnum.valueOf(resultSet.getString("category")));
+                ingredient.setRequiredQuantity(resultSet.getDouble("required_quantity"));
 
                 lists.add(ingredient);
             }
@@ -79,16 +82,18 @@ public class DataRetriever {
     }
 
     List<Ingredient> createIngredients(List<Ingredient> newIngredients) {
-        String insertSql = "INSERT INTO Ingredient(name,price,category) VALUES (?,?,?);";
+        String insertSql = "INSERT INTO Ingredient(name,price,category,required_quantity) VALUES (?,?,?,?);";
         try {
             Connection connection = dbConnection.getConnection();
             connection.setAutoCommit(false);
+
             try (PreparedStatement preparedStatement = connection.prepareStatement(insertSql,
                     Statement.RETURN_GENERATED_KEYS)) {
                 for (Ingredient ingredient : newIngredients) {
                     preparedStatement.setString(1, ingredient.getName());
                     preparedStatement.setDouble(2, ingredient.getPrice());
                     preparedStatement.setString(3, ingredient.getCategory() == null ? null : ingredient.getCategory().name());
+                    preparedStatement.setDouble(4, ingredient.getRequiredQuantity());
                     preparedStatement.addBatch();
                 }
                 preparedStatement.executeBatch();
@@ -220,7 +225,7 @@ public class DataRetriever {
             RETURNING id""";
 
         String deleteIngredientsSql = "DELETE FROM ingredient WHERE id_dish = ?";
-        String insertIngredientSql = "INSERT INTO ingredient (name, price, category, id_dish) VALUES (?, ?, ?::category_enum, ?)";
+        String insertIngredientSql = "INSERT INTO ingredient (name, price, category, required_quantity,id_dish) VALUES (?,?, ?::category_enum, ?,?)";
 
         Connection conn = dbConnection.getConnection();
         try {
@@ -255,7 +260,8 @@ public class DataRetriever {
                         ps.setString(1, ingredient.getName());
                         ps.setDouble(2, ingredient.getPrice());
                         ps.setString(3, ingredient.getCategory().name());
-                        ps.setInt(4, dishId);
+                        ps.setDouble(4, ingredient.getRequiredQuantity());
+                        ps.setInt(5, dishId);
                         ps.addBatch();
                     }
                     ps.executeBatch();
