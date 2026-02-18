@@ -51,7 +51,7 @@ public class Dish {
                 '}';
     }
 
-    public double getDishPrice() {
+    public double getDishCoast() {
         double total = 0;
         for (Ingredient ingredient : ingredients) {
             total += ingredient.getPrice();

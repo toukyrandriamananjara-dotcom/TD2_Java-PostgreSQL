@@ -15,3 +15,6 @@ CREATE TABLE Ingredient (
     id_dish INT,
     FOREIGN KEY (id_dish) REFERENCES Dish(id) ON DELETE SET NULL
 );
+
+ALTER TABLE Ingredient
+ADD COLUMN required_quantity DECIMAL(10, 2);

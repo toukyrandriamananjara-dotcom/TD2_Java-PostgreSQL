@@ -11,3 +11,11 @@ INSERT INTO Ingredient (id, name, price, category, id_dish) VALUES
 (3, 'Poulet', 4500.00, 'ANIMAL', 2),
 (4, 'Chocolat', 3000.00, 'OTHER', 4),
 (5, 'Beurre', 2500.00, 'DAIRY', 4);
+
+UPDATE Ingredient
+SET required_quantity = CASE
+    WHEN name = 'Laitue' THEN 1
+    WHEN name = 'Tomate' THEN 2
+    WHEN name = 'Poulet' THEN 0.5
+    ELSE NULL
+END;
